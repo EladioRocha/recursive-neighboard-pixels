@@ -1,7 +1,7 @@
-const WIDTH = 20,
-  BOARD_SIZE = 100000
+const WIDTH = 10,
+  BOARD_SIZE = 10000
   SQUARES = [], // Aquí guardamos todos los divs de cada uno de los SQUARES
-  BOMB_AMOUNT = 95000
+  BOMB_AMOUNT = 6000
 
 let PIXELS = []
 let PIXELARTARR = Array(BOARD_SIZE).fill(0)
@@ -25,17 +25,17 @@ async function createBoard() {
   const noBombsArr = Array(BOARD_SIZE - BOMB_AMOUNT).fill(0) // Crea un array de no bombas
   const gameArr = [...noBombsArr, ...bombsArr].sort(() => Math.random() - 0.50) // Une los dos arreglos y distribuye aleatoriamente las bombas
   // JSON.parse(localStorage.getItem('pix'))
-  // gameArr[26] = 1
-  // gameArr[5] = 1
+  gameArr[12] = 1
+  gameArr[23] = 1
 
   PIXELS = gameArr
   
 
-  // let copyPixels = [...PIXELS]
+  let copyPixels = [...PIXELS]
 
-  // reshape(copyPixels, 9980, 20)
+  reshape(copyPixels, 10, 10)
 
-  // console.log(copyPixels)
+  console.log(copyPixels)
   console.log(PIXELS)
 
   for(let i = 0; i < BOARD_SIZE; i++) {
@@ -49,7 +49,7 @@ async function createBoard() {
   }
 
   await iterateBoard()
-  console.log(totalObjects)
+  console.log("TOTAL OBJECTS", totalObjects)
 
 }
 
@@ -57,24 +57,30 @@ createBoard()
 
 var secondss = 0
 var searchingNeigboards = false
+var inRecursive = false
 var columnCount = 0
+var globalIdx = 0
 
 async function iterateBoard() {
   const SQUARES = document.querySelectorAll('.game-container > div')
   let lastIndex = 1
   for(let i = 0; i < BOARD_SIZE; i++) {
-    await delay(secondss)
+    globalIdx = i
+    await delay(100)
     if(searchingNeigboards) {
       i--
       continue
     }
     if(lastIndex !== null) {
+      SQUARES[lastIndex].style.background = 'red'
       SQUARES[lastIndex].classList.remove('checked')
     }
     SQUARES[i].classList.add('checked')
     handleCurrentPixel(SQUARES[i], i, true)
+    if(functionsStack.length === 0) {
+      searchingNeigboards = false
+    }
     lastIndex = i
-    columnCount++
     // if(i >= 8) return
   }
 }
@@ -82,10 +88,19 @@ async function iterateBoard() {
 let totalObjects = 0
 
 function handleCurrentPixel(squareDOM, idx, newObject = false) {
-  if(idx in bombsChecked) return
-  console.log(PIXELS[idx])
-  if(squareDOM.classList.contains('checked') && PIXELS[idx] !== 1) return
+  if(idx in bombsChecked) {
+    console.log('aqui meroe')
+    // functionsStack.pop()
+    // if(functionsStack.length === 0) {
+      // searchingNeigboards = false
+    // }
+    return
+  }
+  if(!(idx in bombsChecked) && PIXELS[idx] !== 1 && newObject) return
   if(PIXELS[idx] === 1) {
+    if(!newObject) {
+      functionsStack.push(true)
+    }
     totalObjects += (newObject) ? 1 : 0
     searchingNeigboards = true
     // secondss = 100000
@@ -93,13 +108,21 @@ function handleCurrentPixel(squareDOM, idx, newObject = false) {
     squareDOM.classList.add('checked-forever')
     bombsChecked[idx] = PIXELS[idx]
     // setTimeout(() => {
-      // searchingNeigboards = false
-    // }, 3000)
+    //   searchingNeigboards = false
+    //   }, 1000000)
   }
+  console.log('FUNCTIONS STACK:::: HANDLE CURRENT', functionsStack)
+  // functionsStack.pop()
+  console.log('FUNCTIONS STACK:::: HANDLE CURRENT', functionsStack)
+  if(functionsStack.length === 0) {
+    searchingNeigboards = false
+  }
+  // searchingNeigboards = false
 }
 
+let functionsStack = []
+
 function checkNeighbordSQUARES(idx) {
-  console.log('enter heeere')
   const isInLeftSide = (idx % WIDTH) === 0 // Esto nos ayuda a ver si esta en el principio del lado izquierdo. Por ejemplo: 0, 10, 20 etc.
   const isInRightSide = (idx % WIDTH) === (WIDTH - 1) // Esta constante nos ayuda a ver si esta al final del lado derecho, ejemplo: 9, 19, 29 etc
 
@@ -155,7 +178,9 @@ function checkNeighbordSQUARES(idx) {
       console.log(newId)
       handleCurrentPixel(newSquare, parseInt(idx) + WIDTH)
     }
-  })
+
+    functionsStack.pop()
+  }, 100)
 }
 
 // IRRELEVANT ===========================================
